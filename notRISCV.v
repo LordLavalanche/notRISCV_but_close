@@ -44,7 +44,7 @@ module DRAM (
         end
     end
 
-    assign read_data = memory[address]; // ✅ Async read
+    assign read_data = memory[address]; //  Async read
 endmodule
 module dpath(
     input clk,
