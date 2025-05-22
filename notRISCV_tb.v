@@ -1,3 +1,14 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 03/30/2025
+// Design Name: 
+// Module Name: dpath_tb
+// Description: Testbench for datapath with PC and offset tracking
+//////////////////////////////////////////////////////////////////////////////////
+
 module dpath_tb;
 
     // Inputs
@@ -68,7 +79,7 @@ module dpath_tb;
         rst = 0;
 
         // Run simulation for enough time
-        #3000;
+        #30000;
 
         $finish;
     end
@@ -98,3 +109,4 @@ module dpath_tb;
     end
 
 endmodule
+
