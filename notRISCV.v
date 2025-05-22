@@ -18,6 +18,41 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
+//module DRAM (
+//    input clk,
+//    input rst,
+//    input memwrite,
+//    input [31:0] address,
+//    input [31:0] write_data,
+//    output [31:0] read_data
+//);
+//    reg [31:0] memory [0:255];
+//    integer i;
+
+//    always @( posedge clk or posedge rst) begin
+//        if (rst) begin
+//            for (i = 0; i < 256; i 
+//            = i + 1)
+//                memory[i] <= 32'b0;
+
+//            memory[0] <= 32'd42949672;  // Large positive number
+//            memory[1] <= 32'd98374839;  // Larger number
+//            memory[2] <= 32'd23784932;
+//            memory[3] <= 32'd74839201;
+//            memory[4] <= 32'd12938475;
+//            memory[5] <= 32'd99887766;
+//            memory[6] <= 32'd11344;
+//            memory[7] <= 32'd6788;
+//            memory[8] <= 32'd66;
+//            memory[9] <= 32'd77778888;
+
+//        end else if (memwrite) begin
+//            memory[address] = write_data;
+//        end
+//    end
+
+//    assign read_data = memory[address]; //  Async read
+//endmodule
 module DRAM (
     input clk,
     input rst,
@@ -29,23 +64,23 @@ module DRAM (
     reg [31:0] memory [0:255];
     integer i;
 
-    always @( posedge clk or posedge rst) begin
-        if (rst) begin
-            for (i = 0; i < 256; i 
-            = i + 1)
-                memory[i] <= 32'b0;
-
-            memory[0] <= 32'd63;
-            memory[1] <= 32'd467;
-            memory[2] <= 32'd10001;
-            memory[3] <= 32'd885;
-        end else if (memwrite) begin
-            memory[address] = write_data;
-        end
+    // Initialize memory from file
+    initial begin
+        $readmemh("/home/bhuvaneshganta/Desktop/DRAM.mem", memory);
     end
 
-    assign read_data = memory[address]; //  Async read
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            // Reset does NOT overwrite memory contents
+            // (File-loaded values persist through reset)
+        end
+        else if (memwrite) begin
+            memory[address] <= write_data;
+        end
+    end
+    assign read_data = memory[address]; // Async read
 endmodule
+
 module dpath(
     input clk,
     input rst,
@@ -235,17 +270,11 @@ initial begin
 
 //    mem[9] <= 32'b1_00000011_0_0000000000_00000_1101111; // jal  x0, -6          ; jump back to LOOP_HEAD (mem[3])
 
-
-
-
-  
-
-
-
+//BUBBLE SORT
 // [0] i = 0
 mem[0]  <= 32'b000000000000_00000_000_00101_0010011; // addi x5, x0, 0     ; i = 0
 // [1] N = 4
-mem[1]  <= 32'b000000000100_00000_000_00111_0010011; // addi x7, x0, 4     ; N = 4
+mem[1]  <= 32'b000000010100_00000_000_00111_0010011; // addi x7, x0, 4     ; N = 20 or 10 according to data used
 
 // LOOP1:
 // [2] if (i < N) → continue_outer
@@ -302,6 +331,44 @@ mem[20] <= 32'b1_00001001_0_0000000000_00000_1101111; // jal x0, -Y          ; t
 // [20] EXIT (nop)
 mem[21] <= 32'b000000000000_00000_000_00000_0010011; // nop
 
+  
+// Insertion Sort
+//mem[0]  <= 32'b000000000001_00000_000_00001_0010011; // addi x1, x0, 1         ; x1 = 1
+//mem[1]  <= 32'b000000000001_00000_000_00101_0010011; // addi x5, x0, 1         ; i = 1
+//mem[2]  <= 32'b000000001011_00000_000_00111_0010011; // addi x7, x0, 20        ; N = 20
+//mem[3]  <= 32'b000000000000_00000_000_00011_0010011; // addi x3, x0, 0         ; base = 0 (array starts at memory[0])
+
+//// OUTER_LOOP:
+//mem[4]  <= 32'b0000000_00101_00111_100_01000_1100011; // blt x5, x7, +8         ; if (i < N) → continue   
+//mem[5]  <= 32'b01111111100000000000000001101111;      // jal x0, offset         ; EXIT jump
+
+//// continue:
+//mem[6]  <= 32'b000000000000_00101_010_01010_0000011; // lw x10, 0(x5)          ; key = arr[i]
+//mem[7]  <= 32'b0100000_00001_00101_000_00110_0110011; // sub x6, x5, x1         ; j = i - 1
+
+//// INNER_LOOP:
+//mem[8]  <= 32'b0000000_00000_00110_100_01000_1100011; // blt x0, x6, +8         ; if (j >= 0) → check_value
+//mem[9]  <= 32'b0_00000100_0_0000000000_00000_1101111;      // jal x0, offset         ; jumpout (exit inner loop)
+//mem[10] <= 32'b000000000000_00110_010_01011_0000011; // lw x11, 0(x6)          ; temp = arr[j]
+//mem[11] <= 32'b0000000_01010_01011_100_01000_1100011; // blt x10, x11, +8       ; if (key < temp) → shift
+//mem[12] <= 32'b0_00000010_1_0000000000_00000_1101111; // jal x0, offset         ; jumpout (exit inner loop)
+
+//// shift:
+//mem[13] <= 32'b000000000001_00110_000_01100_0010011; // addi x12, x6, 1        ; x12 = j + 1
+//mem[14] <= 32'b0000000_01011_01100_010_00000_0100011; // sw x11, 0(x12)         ; arr[j+1] = arr[j]
+//mem[15] <= 32'b0100000_00001_00110_000_00110_0110011; // sub x6, x6, x1         ; j--
+//mem[16] <= 32'b1_00000100_0_0000000000_00000_1101111; // jal x0, offset         ; jump to inner_loop (to [8])
+
+//// insert:
+//mem[17] <= 32'b000000000001_00110_000_01100_0010011; // addi x12, x6, 1        ; x12 = j + 1
+//mem[18] <= 32'b0000000_01010_01100_010_00000_0100011; // sw x10, 0(x12)         ; arr[j+1] = key
+//mem[19] <= 32'b000000000001_00101_000_00101_0010011; // addi x5, x5, 1         ; i++
+//mem[20] <= 32'b1_00001000_0_0000000000_00000_1101111; // jal x0, offset         ; jump to outer_loop (to [4])
+
+//// END
+//mem[21] <= 32'b000000000000_00000_000_00000_0010011; // nop                    ; final nop
+
+
 
 //        end else begin
 //            mem[address>>2] <= win;
@@ -312,38 +379,6 @@ mem[21] <= 32'b000000000000_00000_000_00000_0010011; // nop
     
 endmodule
 
-//module registerfile(
-//    input clk,
-//    input rst,
-//    input regwrite,
-//    input [4:0] read_addr1,
-//    input [4:0] read_addr2,
-//    input [4:0] write_addr,
-//    input [31:0] write_data,
-//    output reg [31:0] read_data1,
-//    output reg [31:0] read_data2
-//);
-//    reg [31:0] registers[31:0];
-//    integer i;
-
-//    always @(*) begin
-//        read_data1 = registers[read_addr1];
-//        read_data2 = registers[read_addr2];
-//    end
-
-//    always @(posedge clk or posedge rst) begin
-//        if (rst) begin
-//            for (i = 0; i < 32; i = i + 1)
-//                registers[i] <= 32'b0;
-//            registers[5'b00001] <= 2;
-//            registers[5'b00010] <= 9;
-//            registers[5'b00011] <= 9;
-//            registers[5'b00100] <= 7;
-//        end else if (regwrite!= 0) begin
-//            registers[write_addr] <= write_data;
-//        end
-//    end
-//endmodule
 
 module registerfile(
     input wire clk,
@@ -378,27 +413,6 @@ module registerfile(
         end
     end
 endmodule
-//module signextend(
-//    input [31:0] instruction,
-//    input signext,
-//    input [1:0] immsel,
-//    output reg [31:0] imm_out
-//);
-//    always @(*) begin
-//        if (signext) begin
-//            case (immsel)
-//                // B-type: Remove 1'b0
-//                2'b01: imm_out = {{20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8]}; 
-//                // J-type: Remove 1'b0
-//                2'b10: imm_out = {{12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21]}; 
-//                2'b00: imm_out = {{20{instruction[31]}}, instruction[31:20]}; // I-type
-//                default: imm_out = 32'b1;
-//            endcase
-//        end else begin
-//            imm_out = 32'b0;
-//        end
-//    end
-//endmodule
 module signextend(
     input [31:0] instruction,
     input signext,
@@ -408,55 +422,43 @@ module signextend(
 
     assign imm_out = (signext) ? 
                      (immsel == 2'b01) ? {{20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8],1'b0} : // B-type
-                      //(immsel == 2'b10) ? $signed({{12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0}) :
-
-                     (immsel == 2'b10) ?(instruction[31]?-{ 12'b0, instruction[19:12], instruction[20], instruction[30:21], 1'b0}:{ 12'b0, instruction[19:12],instruction[20],instruction[30:21],1'b0} ):
-                     
+                     (immsel == 2'b10) ? (instruction[31]?-{ 12'b0, instruction[19:12], instruction[20], instruction[30:21], 1'b0}:{ 12'b0, instruction[19:12],instruction[20],instruction[30:21],1'b0} ):
                      (immsel==2'b11)? {{20{instruction[31]}}, instruction[31:25], instruction[11:7]}:
                      (immsel == 2'b00) ? {{20{instruction[31]}}, instruction[31:20]} : // I-type
                      32'b1 : 
                      32'b0;
 
 endmodule
+
 module ALU(
     input [31:0] a,
     input [31:0] b,
     input [3:0] alucon,
     output reg [31:0] result
-   
 );
     always @(*) begin
         // Default values
         result = 32'b0;
       
-
         case (alucon)
             4'b0010: result = a + b;                    // ADD
             4'b1010: result = a - b;                    // SUB
-            4'b0110: begin                              
-                result = a==b;
-                                        // For BEQ
-            end
+            4'b0110: result = (a == b);                 // BEQ
             4'b0001: result = a & b;                    // AND
             4'b1000: result = a * b;                    // MUL
             4'b1010: result = a >> b;                   // SRL
-            4'b1110: result = (a != b);                   // BNE
-            4'b0111: result = a+b;
-            4'b0101: result=a+b ;
-            4'b1111:
-            begin result = (a>b); 
-        
-            end  // BLT
-            4'b1001: result=32'b1;
+            4'b1110: result = (a != b);                 // BNE
+            4'b0111: result = a + b;                    // For address calculation
+            4'b0101: result = a + b;                    // For address calculation
+            4'b1111: result = ($signed(a) > $signed(b));  // BLT (signed)
+            4'b1100: result = ($signed(a) <= $signed(b)); // BGE (signed)
+            4'b1001: result = 32'b1;                    // JAL
             default: begin
                 result = 32'b0;
-       
             end
         endcase
     end
 endmodule
-
-
 
 module decoder(
     input [31:0] instruction,
@@ -472,13 +474,13 @@ module decoder(
 
     // Assign control signals based on the instruction
     assign PCsel = (instruction[6:0] == 7'b1101111) || // JAL
-                   (instruction[6:0] == 7'b1100011);   // BEQ, BNE, BLT
+                   (instruction[6:0] == 7'b1100011);   // BEQ, BNE, BLT, BGE
 
     assign immsel = (instruction[6:0] == 7'b1101111) ? 2'b10 : // JAL
-                    (instruction[6:0] == 7'b1100011) ? 2'b01 : // BEQ, BNE, BLT
-                    (instruction[6:0] == 7'b0000011) ? 2'b00 : //lw
-                    (instruction[6:0] == 7'b0100011) ? 2'b11:  //sw
-                    (instruction[6:0] == 7'b0010011) ? 2'b00 : //I
+                    (instruction[6:0] == 7'b1100011) ? 2'b01 : // BEQ, BNE, BLT, BGE
+                    (instruction[6:0] == 7'b0000011) ? 2'b00 : // lw
+                    (instruction[6:0] == 7'b0100011) ? 2'b11:  // sw
+                    (instruction[6:0] == 7'b0010011) ? 2'b00 : // I
                     3'b111;
                     
 
@@ -495,21 +497,23 @@ module decoder(
     assign resultSRC = (instruction[6:0] == 7'b0000011)||(instruction[6:0] == 7'b0100011);// LW (Load) and SW
 
     assign signext = (instruction[6:0] == 7'b1101111) || // JAL
-                     (instruction[6:0] == 7'b1100011) || // BEQ, BNE, BLT
+                     (instruction[6:0] == 7'b1100011) || // BEQ, BNE, BLT, BGE
                      (instruction[6:0] == 7'b0010011) || // I-type
                      (instruction[6:0] == 7'b0000011) || // LW
                      (instruction[6:0] == 7'b0100011);   // SW
 
-    assign alucon = (instruction[6:0] == 7'b1100011 && instruction[14:12] == 3'b100) ? 4'b1111 : // BLT uses subtraction
+    assign alucon = (instruction[6:0] == 7'b1100011 && instruction[14:12] == 3'b100) ? 4'b1111 : // BLT
+                    (instruction[6:0] == 7'b1100011 && instruction[14:12] == 3'b101) ? 4'b1100 : // BGE (new)
                     (instruction[6:0] == 7'b1100011 && instruction[14:12] == 3'b000) ? 4'b0110 : // BEQ
+                    (instruction[6:0] == 7'b1100011 && instruction[14:12] == 3'b001) ? 4'b1110 : // BNE
                     (instruction[6:0] == 7'b0010011 && instruction[14:12] == 3'b000) ? 4'b0010 : // ADDI
                     (instruction[6:0] == 7'b0010011 && instruction[14:12] == 3'b100) ? 4'b0001 : // ANDI
                     (instruction[6:0] == 7'b0110011 && {instruction[30], instruction[14:12]} == 4'b0000) ? 4'b0010 : // ADD
                     (instruction[6:0] == 7'b0110011 && {instruction[30], instruction[14:12]} == 4'b1000) ? 4'b1010 : // SUB
                     (instruction[6:0] == 7'b0110011 && {instruction[30], instruction[14:12]} == 4'b0100) ? 4'b0001 : // AND
-                    (instruction[6:0] == 7'b1101111 ) ? 4'b1001 : //jal
-                    (instruction[6:0] == 7'b0000011 ) ? 4'b0111:   //lw
-                    (instruction[6:0] == 7'b0100011)?   4'b0101 : //sw
+                    (instruction[6:0] == 7'b1101111 ) ? 4'b1001 : // jal
+                    (instruction[6:0] == 7'b0000011 ) ? 4'b0111:   // lw
+                    (instruction[6:0] == 7'b0100011)?   4'b0101 : // sw
                     4'b0000; // Default
 
 endmodule
