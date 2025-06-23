@@ -8,5 +8,5 @@ These programs are
 4) insertion sort implementation
 
 
-Using this as an approximation for better performing processors, we can get an understanding of the relative perfomance of different sorting algorithms, by tracking the number of cycels and read writes taken. I have made this easy to observe using the testbench provided. 
+Using this as an approximation for better performing processors, we can get an understanding of the relative perfomance of different sorting algorithms, by tracking the number of cycles and read writes taken. I have made this easy to observe using the testbench provided. 
 The testbench can be a handy tool for users to gain a rudimentary understanding of the functioning of single and doubly nested loops. 
